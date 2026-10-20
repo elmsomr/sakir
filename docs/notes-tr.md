@@ -57,7 +57,7 @@ kapanıp açılırsa kendiliğinden yeniden bulunuyor.
 Gereken: MSI Center kurulu olmalı (uygulama onun DLL'lerini kullanır).
 
 ```bash
-cd F:\Claude\Sakir\src\Sakir
+cd src\Sakir
 dotnet build -c Release
 ```
 
