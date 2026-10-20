@@ -168,13 +168,6 @@ Bunun bedeli daha az içerik sığması. Sahneler buna göre uyarlandı:
 - Dev sayıların punto boyutu `H` ile orantılı
 - Sığmayan satırlar çiziliyor yerine **düşürülüyor** (`if (ry + 18 > bottomTop) break;`)
 
-## Bağış / proje bağlantısı
-
-`sakir.config.json` içindeki `DonateUrl` ve `ProjectUrl` doldurulduğunda
-arayüzde Destek bölümü çıkar. Boş bırakılırsa bölüm hiç görünmez — çatallayan
-biri kendi bağlantısını koyana kadar boş durur. Yalnızca `http`/`https`
-şemasına izin verilir.
-
 ## Mimari
 
 ```
