@@ -274,5 +274,5 @@ ADLX), SMTC müzik verisi + albüm kapağı, Steam görselleri, tepsi ikonu, aya
 kalıcılığı.
 
 Henüz yok: yansıtma bölgesi için görsel seçici (şu an config dosyasından),
-oyun temaları için arayüz editörü, nVidia yolunun gerçek donanımda testi
+oyun temaları için arayüz editörü, NVIDIA yolunun gerçek donanımda testi
 (kod var, bu makine AMD).

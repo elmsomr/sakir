@@ -121,9 +121,9 @@ administrator once to create that task.
   has to go through the mirror scene as pushed frames. Audio stays on the PC.
 - Minimised windows cannot be mirrored — a minimised window has nothing to
   render. Some DRM-protected surfaces come back black.
-- **GPU sensors are verified on AMD only.** The nVidia path reads MSI's own
-  nVidia structure (temperature, usage, clock, VRAM; MSI's API exposes no
-  hotspot or power for nVidia) but has never run on real nVidia hardware. If
+- **GPU sensors are verified on AMD only.** The NVIDIA path reads MSI's own
+  NVIDIA structure (temperature, usage, clock, VRAM; MSI's API exposes no
+  hotspot or power for NVIDIA) but has never run on real NVIDIA hardware. If
   the GPU gauge looks wrong, please run `Sakir.exe --selftest` and open an
   issue with the output. Intel GPUs are not supported; the GPU gauge shows
   "no sensors".
@@ -147,13 +147,33 @@ Detailed development notes (Turkish) are in
 Issues and pull requests welcome. Especially useful:
 
 - S360 confirmation, or any other CoreLiquid model with this panel
-- nVidia GPU sensor testing
+- NVIDIA GPU sensor testing
 - New game profiles
 
 ## License
 
 [GPL-3.0](LICENSE). You can use, modify and redistribute this, but derivative
 works have to stay open source under the same license.
+
+## Third-party components
+
+Şakir is built on, or works alongside, the following. Each keeps its own
+license; this project does not change them.
+
+| Component | Used for | License |
+|---|---|---|
+| [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) 0.9.6 | CPU temperature, via NuGet | MPL-2.0 |
+| [PawnIO](https://pawnio.eu/) | Kernel driver LibreHardwareMonitor uses for CPU temperature. **Not bundled**; you install it yourself | See the [PawnIO repository](https://github.com/namazso/PawnIO) |
+| [System.Drawing.Common](https://www.nuget.org/packages/System.Drawing.Common) | Rendering frames | MIT |
+| .NET 8 runtime | Bundled in the self-contained release exe | MIT |
+| MSI Center | Şakir loads its libraries from your own installation at runtime. **Nothing from MSI is bundled or redistributed** | MSI's own terms |
+
+The Steam artwork shown in the game scene is read from your own local Steam
+library cache and is not included in this repository. Game names, logos and
+artwork belong to their owners.
+
+Not affiliated with, endorsed by, or connected to MSI, Apple, NVIDIA, AMD or
+Valve. All product names and trademarks belong to their respective owners.
 
 ## The name
 

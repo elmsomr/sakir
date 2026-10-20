@@ -194,7 +194,7 @@ frame by frame, which caps it at that ~10 fps.
 MSI already ships the vendor libraries and `API_Coreliquid.dll` already declares
 the P/Invokes, so there is no need to write your own bindings or ship anything:
 
-- **GPU** — `DLL_ADLX` (AMD) / `DLL_NDA` (nVidia).
+- **GPU** — `DLL_ADLX` (AMD) / `DLL_NDA` (NVIDIA).
   `ADLX_Initialize("<MSI Center>\Coreliquid")` then
   `ADLX_GetSensors(0, ref ADLX_Sensors)` gives temperature, hotspot, usage,
   clock, fan RPM, power, voltage, memory.

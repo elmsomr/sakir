@@ -5,7 +5,7 @@ namespace Sakir.Sensors;
 
 /// <summary>
 /// GPU readings via the vendor DLLs MSI already ships in its Coreliquid folder
-/// (ADLX.dll for AMD, NDA.dll for nVidia). API_Coreliquid.dll declares the
+/// (ADLX.dll for AMD, NDA.dll for NVIDIA). API_Coreliquid.dll declares the
 /// P/Invokes and the sensor structs for both, so we drive its DLL_ADLX /
 /// DLL_NDA classes by reflection instead of writing our own bindings - which
 /// also means no extra native dependency to ship.
@@ -21,9 +21,9 @@ public sealed class GpuSensors
 
     public bool Available { get; private set; }
 
-    /// <summary>False on nVidia: MSI's API exposes neither hotspot nor power.</summary>
+    /// <summary>False on NVIDIA: MSI's API exposes neither hotspot nor power.</summary>
     public bool HasHotspotAndPower => _isAmd;
-    public string Vendor => _isAmd ? "AMD" : "nVidia";
+    public string Vendor => _isAmd ? "AMD" : "NVIDIA";
 
     public int Temp { get; private set; }
     public int Hotspot { get; private set; }
@@ -43,7 +43,7 @@ public sealed class GpuSensors
             Path.Combine(CoreLiquidDevice.MsiRoot, "Coreliquid", "API_Coreliquid.dll"));
         string coreliquid = Path.Combine(CoreLiquidDevice.MsiRoot, "Coreliquid");
 
-        // AMD first, then nVidia; whichever initialises is the live one.
+        // AMD first, then NVIDIA; whichever initialises is the live one.
         if (TryInit(asm, "API_Coreliquid.DLL_ADLX", "API_Coreliquid.ADLX_Sensors",
                     "ADLX_Initialize", new object?[] { coreliquid }))
         {
@@ -99,7 +99,7 @@ public sealed class GpuSensors
                 // MSI's NDA_Sensors uses different field names from the AMD
                 // struct, and has no hotspot or watt reading at all. Reading the
                 // AMD names here silently returned 0 (a fake 0 C). Names taken
-                // from reflection over NDA_Sensors; untested on real nVidia
+                // from reflection over NDA_Sensors; untested on real NVIDIA
                 // hardware.
                 Temp = GetInt(s, "GPU_Temperature_Current");
                 Usage = GetInt(s, "GPU_Usage");
