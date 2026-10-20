@@ -7,10 +7,10 @@
       <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
         <!-- Deliberately asInvoker. Everything except CPU temperature works
              without elevation, and forcing a UAC prompt on every launch for one
-             sensor is a bad trade. LibreHardwareMonitor needs admin to load its
-             kernel driver, so the app detects elevation at runtime: unelevated
-             it simply hides CPU temperature and offers a "restart as
-             administrator" action. The autostart task is registered with
+             sensor is a bad trade. Reading CPU temperature needs administrator
+             rights plus the separately installed PawnIO driver, so the app
+             detects elevation at runtime: unelevated it simply hides CPU
+             temperature and offers a "restart as administrator" action. The autostart task is registered with
              highest privileges, so at login it runs elevated with no prompt. -->
         <requestedExecutionLevel level="asInvoker" uiAccess="false" />
       </requestedPrivileges>

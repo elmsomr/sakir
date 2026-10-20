@@ -74,9 +74,10 @@ Komut satırı seçenekleri: `--tray` (pencere açmadan tepsiye), `--selftest`.
 ### Yönetici hakkı
 
 Uygulama normal yetkiyle çalışır ve her şey çalışır — **tek istisna CPU
-sıcaklığı**. LibreHardwareMonitor onu okumak için çekirdek sürücüsü yüklüyor,
-bu da yükseltme gerektiriyor. Yükseltilmemişken arayüz "CPU temp: needs admin"
-der ve bir "Restart as administrator" düğmesi gösterir.
+sıcaklığı**. Onu okumak için ayrıca kurulan **PawnIO** sürücüsü ve yönetici
+hakkı gerekiyor (uygulama sürücü taşımıyor, README'ye bak). Yükseltilmemişken
+arayüz "CPU temp: needs admin" der ve bir "Restart as administrator" düğmesi
+gösterir. Yönetici olup PawnIO yoksa bunu da söyler, CPU halkası yük gösterir.
 
 "Start with Windows" seçeneği görevi `/RL HIGHEST` ile kaydeder, yani oturum
 açılışında UAC sormadan yükseltilmiş başlar. Görevi oluşturmak için uygulamayı
@@ -252,9 +253,9 @@ Core\Autostart.cs            Gorev Zamanlayici kaydi
     kullanılıyor — sayaç adları yerelleştirilmiş olduğu için Türkçe Windows'ta
     İngilizce adlarla çalışmaz.
 
-13. **Cihaza aynı anda iki şey erişmesin.** Uygulama çalışırken `msi-lcd`
-    klasöründeki PowerShell tanı script'lerini çalıştırmak push hatalarına yol
-    açar. Uygulama bunu 15 ardışık hatadan sonra kendi kendine toparlıyor
+13. **Cihaza aynı anda iki şey erişmesin.** Uygulama çalışırken cihaza erişen
+    başka bir araç (kendi yazdığın tanı script'leri dahil) çalıştırmak push
+    hatalarına yol açar. Uygulama bunu 15 ardışık hatadan sonra kendi kendine toparlıyor
     (~4 saniye), ama önce uygulamayı tepsiden kapatmak daha temiz.
 
 ---

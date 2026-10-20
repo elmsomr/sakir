@@ -126,9 +126,9 @@ public sealed class GameScene : IScene
         // Ordered by what actually matters mid-game, because the last rows get
         // dropped when the text scale leaves no room for them.
         if (ctx.Gpu.Available)
-            rows.Add(("GPU", $"{ctx.Gpu.Temp}{Draw.Deg}C", Draw.TempColor(ctx.Gpu.Temp, p.Accent)));
+            rows.Add(("GPU", $"{ctx.Gpu.Temp}{Draw.Deg}C", Draw.TempColor(ctx.Gpu.Temp, Draw.Warning)));
         if (ctx.System.CpuTempAvailable)
-            rows.Add(("CPU", $"{ctx.System.CpuTemp:0}{Draw.Deg}C", Draw.TempColor(ctx.System.CpuTemp, p.Accent)));
+            rows.Add(("CPU", $"{ctx.System.CpuTemp:0}{Draw.Deg}C", Draw.TempColor(ctx.System.CpuTemp, Draw.Warning)));
         if (ctx.Pump is { Available: true } pump)
         {
             rows.Add(pump.PumpStopped

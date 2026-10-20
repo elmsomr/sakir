@@ -1,0 +1,10 @@
+{
+  "key": "pubg",
+  "name": "PUBG: BATTLEGROUNDS",
+  "process": "TslGame",
+  "steamAppId": "578080",
+  "accent": "auto",
+  "fallbackAccent": "#E8A33D",
+  "background": ["#141A0F", "#2C2A18"],
+  "motif": "diagonal"
+}

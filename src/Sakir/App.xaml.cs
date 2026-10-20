@@ -22,6 +22,16 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        if (e.Args.Contains("--profiles", StringComparer.OrdinalIgnoreCase))
+        {
+            // Validates game profiles without touching the panel, so it is safe to
+            // run while the app is already driving the display.
+            AttachConsole(-1);
+            Console.SetOut(new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true });
+            Shutdown(ProfilesReport());
+            return;
+        }
+
         if (e.Args.Contains("--selftest", StringComparer.OrdinalIgnoreCase))
         {
             // A WinExe has no console of its own; attach to the launching one and
@@ -152,6 +162,30 @@ public partial class App : System.Windows.Application
         try { _single?.ReleaseMutex(); } catch { }
         _single?.Dispose();
         base.OnExit(e);
+    }
+
+    /// <summary>Lists every game profile, any file that failed to load, and the accent each resolves to.</summary>
+    private static int ProfilesReport()
+    {
+        var catalog = new Games.GameCatalog();
+        Console.WriteLine();
+        Console.WriteLine($"games folder: {catalog.GamesDir}  ({(Directory.Exists(catalog.GamesDir) ? "exists" : "not created yet")})");
+        Console.WriteLine($"profiles loaded: {catalog.Profiles.Count}");
+        foreach (Games.GameProfile p in catalog.Profiles)
+        {
+            catalog.LoadArt(p);
+            string accent = $"#{p.Accent.R:X2}{p.Accent.G:X2}{p.Accent.B:X2}";
+            string how = !p.AccentAuto ? "fixed"
+                : p.Hero is null ? "auto, but no artwork found -> fallback"
+                : "auto, from artwork";
+            Console.WriteLine($"  {p.Key,-14} process={p.ProcessName,-14} accent={accent} ({how})  art={(p.Hero is null ? "none" : $"{p.Hero.Width}x{p.Hero.Height}")}  logo={(p.Logo is null ? "none" : "yes")}");
+        }
+        if (catalog.Issues.Count > 0)
+        {
+            Console.WriteLine("problems:");
+            foreach (string s in catalog.Issues) Console.WriteLine("  " + s);
+        }
+        return catalog.Issues.Count == 0 ? 0 : 1;
     }
 
     /// <summary>

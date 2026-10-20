@@ -99,6 +99,13 @@ public static class Draw
     public static StringFormat RightAligned() => new() { Alignment = StringAlignment.Far };
 
     /// <summary>White below 75 C, amber approaching the limit, red past 85 C.</summary>
+    /// <summary>
+    /// Fixed warning colour. It must not follow a game's accent: with an
+    /// auto-picked blue or green accent, "getting hot" would stop looking like a
+    /// warning.
+    /// </summary>
+    public static readonly Color Warning = Color.FromArgb(255, 255, 190, 60);
+
     public static Color TempColor(double c, Color warm) =>
         c >= 85 ? Color.FromArgb(255, 255, 70, 70) : c >= 75 ? warm : Color.White;
 }

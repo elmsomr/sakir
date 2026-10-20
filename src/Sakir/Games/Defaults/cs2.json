@@ -1,0 +1,10 @@
+{
+  "key": "cs2",
+  "name": "COUNTER-STRIKE 2",
+  "process": "cs2",
+  "steamAppId": "730",
+  "accent": "auto",
+  "fallbackAccent": "#4FA8DB",
+  "background": ["#0A1420", "#142C42"],
+  "motif": "scanline"
+}

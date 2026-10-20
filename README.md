@@ -29,8 +29,10 @@ You can also pin a scene, or mirror any window onto the panel.
 browsers — anything that registers with Windows — works, artwork included.
 
 **Game artwork** comes from your local Steam library cache, or your own images.
-Nothing is downloaded. PUBG and CS2 ship as profiles; adding more is a few lines
-in `Games/GameCatalog.cs`.
+Nothing is downloaded. PUBG and CS2 ship as profiles. Adding a game is one small
+JSON file in a `games` folder, no rebuild, and the accent colour can be picked
+automatically from the game's artwork. See
+[`docs/GAME-PROFILES.md`](docs/GAME-PROFILES.md).
 
 **Window mirroring** captures the target window directly rather than copying
 pixels off the screen, so the window can sit behind everything else and still

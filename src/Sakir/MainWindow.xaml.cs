@@ -97,14 +97,22 @@ public partial class MainWindow : Window
         if (!SystemSensors.IsElevated)
         {
             ElevateButton.Visibility = Visibility.Visible;
-            NoteText.Text = "CPU temperature needs administrator rights (LibreHardwareMonitor loads a "
-                          + "kernel driver). Everything else already works. Enabling \"Start with Windows\" "
-                          + "registers an elevated task, so it runs without a prompt at login.";
+            NoteText.Text = "CPU temperature is optional: it needs the PawnIO driver (pawnio.eu) installed "
+                          + "and Sakir running as administrator. Without it the CPU gauge shows load. "
+                          + "Everything else already works. Enabling \"Start with Windows\" registers an "
+                          + "elevated task, so it starts without a prompt at login.";
         }
         else
         {
             ElevateButton.Visibility = Visibility.Collapsed;
-            NoteText.Text = _service.LastError ?? "";
+            // Elevated is not enough: with no PawnIO driver the library opens
+            // fine and reads nothing. Say so, rather than leaving the user to
+            // wonder why the temperature never shows up. Only once the first
+            // sensor pass has run, or this would flash at startup.
+            NoteText.Text = !_service.CpuTempAvailable && _service.SensorsAlive != DateTime.MinValue
+                ? "Running as administrator, but no CPU temperature is readable. Install the PawnIO "
+                  + "driver (pawnio.eu); until then the CPU gauge shows load."
+                : _service.LastError ?? "";
         }
     }
 
@@ -235,6 +243,12 @@ public partial class MainWindow : Window
     {
         string dir = _service.Games.BackgroundsDir;
         Directory.CreateDirectory(dir);
+        Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true });
+    }
+
+    private void OpenGames_Click(object sender, RoutedEventArgs e)
+    {
+        string dir = _service.Games.EnsureGamesDir();
         Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true });
     }
 

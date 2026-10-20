@@ -123,11 +123,12 @@
             <TextBlock Text="STARTUP" Style="{StaticResource Label}" />
             <CheckBox x:Name="AutoStart" Content="Start with Windows" Click="AutoStart_Click" />
 
-            <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
-                <Button Content="Backgrounds folder" Click="OpenBackgrounds_Click" Margin="0,0,8,0" />
+            <WrapPanel Margin="0,18,0,0">
+                <Button Content="Backgrounds folder" Click="OpenBackgrounds_Click" Margin="0,0,8,6" />
+                <Button Content="Game profiles folder" Click="OpenGames_Click" Margin="0,0,8,6" />
                 <Button x:Name="ElevateButton" Content="Restart as administrator"
-                        Click="Elevate_Click" Visibility="Collapsed" />
-            </StackPanel>
+                        Click="Elevate_Click" Visibility="Collapsed" Margin="0,0,8,6" />
+            </WrapPanel>
 
             <TextBlock x:Name="NoteText" Foreground="{StaticResource Muted}" FontSize="11"
                        TextWrapping="Wrap" Margin="0,14,0,0" />

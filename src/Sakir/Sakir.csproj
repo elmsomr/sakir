@@ -30,12 +30,16 @@
     <!-- embedded as well as set as the app icon, so the tray can load the
          proper multi-size version instead of a scaled-up 32px one -->
     <EmbeddedResource Include="sakir.ico" />
+    <!-- built-in game profiles; embedded so the release stays a single exe -->
+    <EmbeddedResource Include="Games\Defaults\*.json" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="8.0.6" />
-    <!-- CPU package/core temperatures; needs its kernel driver, hence the
-         requireAdministrator manifest. -->
+    <!-- CPU package/core temperatures. 0.9.5+ reads them through the separately
+         installed PawnIO driver; 0.9.3 and earlier bundled WinRing0, which
+         Windows Defender removes as a vulnerable driver. Reading still needs
+         administrator rights at runtime (the app stays asInvoker). -->
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
   </ItemGroup>
 
