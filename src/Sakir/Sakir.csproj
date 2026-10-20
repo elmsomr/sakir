@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- 10.0.19041 gives us the CsWinRT projections for Windows.Media.Control
+         (SMTC), so now-playing metadata and album art are strongly typed here
+         instead of the reflection gymnastics the PowerShell prototype needed. -->
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms><!-- NotifyIcon for the tray -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Sakir</AssemblyName>
+    <RootNamespace>Sakir</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- MUST be x86: MSI's API_Coreliquid.dll and MsiHid.dll are 32-bit, and
+         there is no x86 .NET desktop runtime on this machine, so we ship one. -->
+    <PlatformTarget>x86</PlatformTarget>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationIcon>sakir.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- embedded as well as set as the app icon, so the tray can load the
+         proper multi-size version instead of a scaled-up 32px one -->
+    <EmbeddedResource Include="sakir.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="8.0.6" />
+    <!-- CPU package/core temperatures; needs its kernel driver, hence the
+         requireAdministrator manifest. -->
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+  </ItemGroup>
+
+</Project>

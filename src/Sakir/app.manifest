@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="Sakir.app" />
+
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <!-- Deliberately asInvoker. Everything except CPU temperature works
+             without elevation, and forcing a UAC prompt on every launch for one
+             sensor is a bad trade. LibreHardwareMonitor needs admin to load its
+             kernel driver, so the app detects elevation at runtime: unelevated
+             it simply hides CPU temperature and offers a "restart as
+             administrator" action. The autostart task is registered with
+             highest privileges, so at login it runs elevated with no prompt. -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" /><!-- Win 10/11 -->
+    </application>
+  </compatibility>
+
+  <!-- DPI awareness is set via the ApplicationHighDpiMode project property
+       instead; declaring it here too trips build warning WFAC010. -->
+
+</assembly>

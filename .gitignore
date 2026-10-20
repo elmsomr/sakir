@@ -1,0 +1,45 @@
+# ---------------------------------------------------------------- build ----
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/
+.idea/
+
+# ------------------------------------------------------- runtime output ----
+# Written next to the executable at runtime, never committed.
+sakir.config.json
+sakir.log
+sakir.log.1
+
+# ------------------------------------------------------ user artwork -------
+# Drop your own game backgrounds in here locally; they are yours, not the
+# project's, and some of them will be copyrighted game art.
+backgrounds/*
+!backgrounds/README.md
+
+# ----------------------------------------------------- NEVER COMMIT ---------
+# MSI's own binaries. The app loads these from the user's MSI Center install at
+# runtime; redistributing them would mean shipping someone else's copyrighted
+# code. Listed explicitly so an accidental copy into the tree cannot slip in.
+API_Coreliquid.dll
+MsiHid.dll
+MSIDTOLEDDll.dll
+ADLX*.dll
+NDA*.dll
+CPU_Engine*.dll
+DetectFPS.exe
+MEG_HMI_Controller.exe
+*.winmd
+
+# ------------------------------------------------------------- misc --------
+*.tmp
+Thumbs.db
+desktop.ini
