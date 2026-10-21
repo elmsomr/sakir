@@ -157,7 +157,7 @@ public sealed class DashboardScene : IScene
               fLabel, fTiny, mute, centre, drawLabel: false);
 
         var cpuRows = new List<(string, string)> { ("LOAD", $"{ctx.System.CpuLoad:0} %") };
-        if (ctx.System.CpuClockMhz > 0) cpuRows.Add(("CLOCK", $"{ctx.System.CpuClockMhz} MHz"));
+        if (ctx.System.CpuClockMhz > 0) cpuRows.Add(("CLK", $"{ctx.System.CpuClockMhz} MHz"));
         Column(g, "CPU", cpuRows, rx, rw, cyCpu - r, fLabel, fTiny, mute, white, right);
 
         // ---- GPU -----------------------------------------------------------
@@ -168,7 +168,7 @@ public sealed class DashboardScene : IScene
             var gpuRows = new List<(string, string)>
             {
                 ("USAGE", $"{ctx.Gpu.Usage} %"),
-                ("CLOCK", $"{ctx.Gpu.ClockMhz} MHz")
+                ("CLK", $"{ctx.Gpu.ClockMhz} MHz")
             };
             // MSI's API has no power reading on NVIDIA
             if (ctx.Gpu.HasHotspotAndPower) gpuRows.Add(("POWER", $"{ctx.Gpu.Watts} W"));

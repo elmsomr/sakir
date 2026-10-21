@@ -51,7 +51,10 @@
             <TextBlock Text="PANEL" Style="{StaticResource Label}" Margin="0,0,0,6" />
             <Border Background="Black" CornerRadius="6" Padding="4"
                     BorderBrush="#2A2F40" BorderThickness="1">
-                <Image x:Name="Preview" Width="368" Height="276" Stretch="Fill"
+                <!-- Uniform, not Fill: the frame is 320x240 or, on a tall mount,
+                     240x320. Fill stretched the portrait frame into this wide
+                     box and squashed the gauges into ovals. -->
+                <Image x:Name="Preview" Width="368" Height="276" Stretch="Uniform"
                        RenderOptions.BitmapScalingMode="HighQuality" />
             </Border>
             <TextBlock x:Name="DeviceText" Style="{StaticResource Label}" TextWrapping="Wrap" />
