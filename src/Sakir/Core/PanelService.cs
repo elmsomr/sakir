@@ -75,19 +75,31 @@ public sealed class PanelService : IDisposable
     /// that did not grow with it; this way both grow together, and GDI+ still
     /// rasterises the glyphs at their final size so they stay sharp.
     /// </summary>
-    private void ApplyScale(Graphics g, SceneContext ctx)
+    private void ApplyScale(Graphics g, SceneContext ctx, int frameW, int frameH)
     {
         float s = (float)TextScale;
         if (Math.Abs(s - 1f) < 0.01f)
         {
-            ctx.Width = CoreLiquidDevice.PanelWidth;
-            ctx.Height = CoreLiquidDevice.PanelHeight;
+            ctx.Width = frameW;
+            ctx.Height = frameH;
             return;
         }
         g.ScaleTransform(s, s);
-        ctx.Width = (int)(CoreLiquidDevice.PanelWidth / s);
-        ctx.Height = (int)(CoreLiquidDevice.PanelHeight / s);
+        ctx.Width = (int)(frameW / s);
+        ctx.Height = (int)(frameH / s);
     }
+
+    /// <summary>
+    /// Size of the framebuffer the panel currently wants. It follows the
+    /// rotation stored on the device (MSI Center's "direction of your device"):
+    /// 240x320 portrait at 0/180, 320x240 landscape at 90/270. Without a device
+    /// (preview only) it falls back to landscape.
+    /// </summary>
+    public (int Width, int Height) FrameSize =>
+        _device is { IsOpen: true } d ? (d.FrameWidth, d.FrameHeight)
+                                     : (CoreLiquidDevice.LongSide, CoreLiquidDevice.ShortSide);
+
+    public bool Portrait => FrameSize.Height > FrameSize.Width;
 
     public Rectangle MirrorRegion
     {
@@ -220,7 +232,8 @@ public sealed class PanelService : IDisposable
     private void Loop()
     {
         var ctx = new SceneContext { System = _system, Gpu = _gpu, Fps = _fps, Pump = _pump };
-        var frame = new Bitmap(CoreLiquidDevice.PanelWidth, CoreLiquidDevice.PanelHeight);
+        (int fw, int fh) = FrameSize;
+        var frame = new Bitmap(fw, fh);
         var fpsClock = Stopwatch.StartNew();
         int framesThisSecond = 0;
 
@@ -243,11 +256,24 @@ public sealed class PanelService : IDisposable
                 IScene scene = Pick(ctx);
                 ActiveScene = scene.Id;
 
+                // The framebuffer shape follows the stored rotation, which the
+                // user can change in MSI Center while we run. Re-make the frame
+                // when it does, and drop anything still queued in the old shape.
+                (int nw, int nh) = FrameSize;
+                if (nw != frame.Width || nh != frame.Height)
+                {
+                    frame.Dispose();
+                    frame = new Bitmap(nw, nh);
+                    lock (_pushGate) { _pending?.Dispose(); _pending = null; }
+                    _hasPrev = false;
+                    Log.Info($"panel orientation changed: now {nw}x{nh} ({(nh > nw ? "portrait" : "landscape")})");
+                }
+
                 stage = "render:" + scene.Id;
                 using (Graphics g = Graphics.FromImage(frame))
                 {
                     Draw.Prepare(g);
-                    ApplyScale(g, ctx);
+                    ApplyScale(g, ctx, frame.Width, frame.Height);
                     scene.Render(g, ctx);
                 }
 
@@ -424,6 +450,7 @@ public sealed class PanelService : IDisposable
 
     private void PushLoop()
     {
+        DateTime lastDirCheck = DateTime.MinValue;
         int failures = 0;
         bool loggedFirstPush = false;
         int okCount = 0, failCount = 0;
@@ -431,6 +458,21 @@ public sealed class PanelService : IDisposable
 
         while (_running)
         {
+            // The stored rotation decides the framebuffer shape and can be
+            // changed from MSI Center at any time, so look again every few
+            // seconds. A read, on this thread, so a stuck device cannot stall
+            // rendering. The render loop notices the new shape on its next frame.
+            if ((DateTime.Now - lastDirCheck).TotalSeconds >= 3)
+            {
+                lastDirCheck = DateTime.Now;
+                try
+                {
+                    if (_device?.RefreshDirection() == true)
+                        Log.Info($"stored rotation changed to {_device.Direction} deg");
+                }
+                catch { }
+            }
+
             Bitmap? f;
             lock (_pushGate) { f = _pending; _pending = null; }
             if (f is null) { Thread.Sleep(15); continue; }
@@ -540,11 +582,12 @@ public sealed class PanelService : IDisposable
         ctx.Time = _clock.Elapsed.TotalSeconds;
 
         IScene scene = Scenes.FirstOrDefault(s => s.Id == sceneId) ?? _dashboard;
-        var bmp = new Bitmap(CoreLiquidDevice.PanelWidth, CoreLiquidDevice.PanelHeight);
+        (int w, int h) = FrameSize;
+        var bmp = new Bitmap(w, h);
         using (Graphics g = Graphics.FromImage(bmp))
         {
             Draw.Prepare(g);
-            ApplyScale(g, ctx);
+            ApplyScale(g, ctx, w, h);
             scene.Render(g, ctx);
         }
         return bmp;

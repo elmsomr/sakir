@@ -22,6 +22,18 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        int snap = Array.FindIndex(e.Args, a => a.Equals("--snapshot", StringComparison.OrdinalIgnoreCase));
+        if (snap >= 0)
+        {
+            // Renders every scene to PNG in both panel orientations. Never opens
+            // the display, so it is safe while the app is running.
+            AttachConsole(-1);
+            Console.SetOut(new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true });
+            string dir = snap + 1 < e.Args.Length ? e.Args[snap + 1] : Path.Combine(AppContext.BaseDirectory, "snapshots");
+            Shutdown(SnapshotReport(dir));
+            return;
+        }
+
         if (e.Args.Contains("--profiles", StringComparer.OrdinalIgnoreCase))
         {
             // Validates game profiles without touching the panel, so it is safe to
@@ -164,6 +176,77 @@ public partial class App : System.Windows.Application
         base.OnExit(e);
     }
 
+    /// <summary>
+    /// Writes scene-orientation-scale PNGs using real sensor readings, with
+    /// sample values only where there is nothing real to show (FPS, a track).
+    /// Reads the pump and GPU sensors but never opens the display.
+    /// </summary>
+    private static int SnapshotReport(string outDir)
+    {
+        Directory.CreateDirectory(outDir);
+        CoreLiquidDevice.EnsureWorkingDirectory();
+
+        var system = new Sensors.SystemSensors(); system.Start();
+        var gpu = new Sensors.GpuSensors(); try { gpu.Start(); } catch { }
+        var pump = new Sensors.PumpSensors(); try { pump.Start(); } catch { }
+        system.Update(); Thread.Sleep(500); system.Update(); gpu.Update(); pump.Update();
+
+        var fps = new Sensors.FpsProvider { Enabled = false };
+        fps.Fps = 144;
+
+        var catalog = new Games.GameCatalog();
+        Games.GameProfile? game = catalog.ByKey("cs2") ?? catalog.Profiles.FirstOrDefault();
+
+        // a stand-in cover so the music scene has something to draw
+        using var art = new Bitmap(320, 320);
+        using (Graphics ag = Graphics.FromImage(art))
+        using (var lg = new System.Drawing.Drawing2D.LinearGradientBrush(
+                   new Rectangle(0, 0, 320, 320), Color.FromArgb(255, 200, 70, 120),
+                   Color.FromArgb(255, 40, 60, 160), 45f))
+        {
+            ag.FillRectangle(lg, 0, 0, 320, 320);
+            ag.FillEllipse(Brushes.Gold, 90, 90, 140, 140);
+        }
+        var track = new Media.NowPlayingInfo("Apple Music", "Track Title", "Artist Name", "Album Name",
+            "Playing", TimeSpan.FromSeconds(95), TimeSpan.FromSeconds(212), art);
+
+        Scenes.IScene[] scenes =
+        {
+            new Scenes.DashboardScene(), new Scenes.NowPlayingScene(), new Scenes.GameScene()
+        };
+
+        int written = 0;
+        foreach ((string orient, int fw, int fh) in new[] { ("landscape", 320, 240), ("portrait", 240, 320) })
+        {
+            foreach (double scale in new[] { 1.0, 1.25 })
+            {
+                foreach (Scenes.IScene scene in scenes)
+                {
+                    using var bmp = new Bitmap(fw, fh);
+                    using (Graphics g = Graphics.FromImage(bmp))
+                    {
+                        Scenes.Draw.Prepare(g);
+                        var ctx = new Scenes.SceneContext
+                        {
+                            System = system, Gpu = gpu, Fps = fps, Pump = pump,
+                            NowPlaying = track, Game = game, Time = 1.0,
+                            Width = (int)(fw / scale), Height = (int)(fh / scale)
+                        };
+                        if (scale != 1.0) g.ScaleTransform((float)scale, (float)scale);
+                        scene.Render(g, ctx);
+                    }
+                    string file = Path.Combine(outDir, $"{scene.Id}-{orient}-{scale:0.00}.png");
+                    bmp.Save(file, System.Drawing.Imaging.ImageFormat.Png);
+                    written++;
+                }
+            }
+        }
+        Console.WriteLine();
+        Console.WriteLine($"wrote {written} images to {outDir}");
+        system.Dispose(); pump.Dispose();
+        return 0;
+    }
+
     /// <summary>Lists every game profile, any file that failed to load, and the accent each resolves to.</summary>
     private static int ProfilesReport()
     {
@@ -235,7 +318,9 @@ public partial class App : System.Windows.Application
         else Console.WriteLine("  gpu       unavailable");
         sensors.Dispose();
 
-        using var bmp = new Bitmap(CoreLiquidDevice.PanelWidth, CoreLiquidDevice.PanelHeight);
+        // Same shape the app itself would push for this rotation.
+        Console.WriteLine($"  orientation {(dev.Portrait ? "portrait" : "landscape")}, framebuffer {dev.FrameWidth}x{dev.FrameHeight}");
+        using var bmp = new Bitmap(dev.FrameWidth, dev.FrameHeight);
         using (Graphics g = Graphics.FromImage(bmp))
         {
             Scenes.Draw.Prepare(g);

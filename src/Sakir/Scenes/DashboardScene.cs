@@ -37,6 +37,14 @@ public sealed class DashboardScene : IScene
         using StringFormat centre = new() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
         using StringFormat right = Draw.RightAligned();
 
+        // A pump head mounted with its hoses up or down is a portrait screen
+        // (240x320); side by side gauges do not fit it, so stack them.
+        if (H > W)
+        {
+            RenderPortrait(g, ctx, accent, mute, white, fLabel, fTiny, centre, right);
+            return;
+        }
+
         // ---- vertical budget, from the bottom up ---------------------------
         int barH = Math.Max(6, (int)(H * 0.033));
         int by = H - 12 - barH;          // memory bar
@@ -113,13 +121,121 @@ public sealed class DashboardScene : IScene
         g.FillEllipse(accent, W - 18 - pulse / 2, 12 - pulse / 2, pulse, pulse);
     }
 
+    /// <summary>
+    /// Portrait layout: CPU ring over GPU ring, each with its figures in a column
+    /// beside it, then coolant and pump, then memory along the bottom. Anchored
+    /// from the bottom up like the landscape one, so the text-scale setting
+    /// (which shrinks the logical canvas) keeps working.
+    /// </summary>
+    private static void RenderPortrait(Graphics g, SceneContext ctx, SolidBrush accent, SolidBrush mute,
+                                       SolidBrush white, Font fLabel, Font fTiny,
+                                       StringFormat centre, StringFormat right)
+    {
+        int W = ctx.Width, H = ctx.Height;
+
+        int barH = Math.Max(6, (int)(H * 0.03));
+        int by = H - 12 - barH;            // memory bar
+        int pumpY = by - 38;               // pump line
+        int liquidY = pumpY - 18;          // coolant + clock line
+        int floor = liquidY - 6;
+
+        int top = 10;
+        int cell = (floor - top) / 2;
+        int r = Math.Min(cell / 2 - 8, (int)(W * 0.24));
+        int cx = 14 + r + 6;
+        int cyCpu = top + cell / 2;
+        int cyGpu = top + cell + cell / 2;
+        int rx = cx + r + 16;
+        int rw = W - 14 - rx;
+
+        // ---- CPU -----------------------------------------------------------
+        string cpuBig = ctx.System.CpuTempAvailable ? $"{ctx.System.CpuTemp:0}" : $"{ctx.System.CpuLoad:0}";
+        string cpuSub = ctx.System.CpuTempAvailable ? Draw.Deg + "C" : "% load";
+        Color cpuColour = ctx.System.CpuTempAvailable
+            ? Draw.TempColor(ctx.System.CpuTemp, Draw.Warning) : Color.White;
+        Gauge(g, cx, cyCpu, r, "CPU", cpuBig, cpuSub, ctx.System.CpuLoad / 100.0, cpuColour,
+              fLabel, fTiny, mute, centre, drawLabel: false);
+
+        var cpuRows = new List<(string, string)> { ("LOAD", $"{ctx.System.CpuLoad:0} %") };
+        if (ctx.System.CpuClockMhz > 0) cpuRows.Add(("CLOCK", $"{ctx.System.CpuClockMhz} MHz"));
+        Column(g, "CPU", cpuRows, rx, rw, cyCpu - r, fLabel, fTiny, mute, white, right);
+
+        // ---- GPU -----------------------------------------------------------
+        if (ctx.Gpu.Available)
+        {
+            Gauge(g, cx, cyGpu, r, "GPU", $"{ctx.Gpu.Temp}", Draw.Deg + "C", ctx.Gpu.Usage / 100.0,
+                  Draw.TempColor(ctx.Gpu.Temp, Draw.Warning), fLabel, fTiny, mute, centre, drawLabel: false);
+            var gpuRows = new List<(string, string)>
+            {
+                ("USAGE", $"{ctx.Gpu.Usage} %"),
+                ("CLOCK", $"{ctx.Gpu.ClockMhz} MHz")
+            };
+            // MSI's API has no power reading on NVIDIA
+            if (ctx.Gpu.HasHotspotAndPower) gpuRows.Add(("POWER", $"{ctx.Gpu.Watts} W"));
+            Column(g, "GPU", gpuRows, rx, rw, cyGpu - r, fLabel, fTiny, mute, white, right);
+        }
+        else
+        {
+            Gauge(g, cx, cyGpu, r, "GPU", "--", "", 0, Color.FromArgb(120, 255, 255, 255),
+                  fLabel, fTiny, mute, centre, drawLabel: false);
+            Column(g, "GPU", new List<(string, string)> { ("", "no sensors") }, rx, rw, cyGpu - r,
+                   fLabel, fTiny, mute, white, right);
+        }
+
+        // ---- coolant, clock, pump -----------------------------------------
+        g.DrawString(DateTime.Now.ToString("HH:mm"), fLabel, mute,
+            new RectangleF(14, liquidY, W - 28, 16), right);
+
+        if (ctx.Pump is { Available: true } pump)
+        {
+            using var bLiquid = new SolidBrush(Draw.TempColor(pump.LiquidTemp, Draw.Warning));
+            g.DrawString($"LIQUID  {pump.LiquidTemp}{Draw.Deg}C", fLabel, bLiquid, 14, liquidY);
+
+            if (pump.PumpStopped)
+            {
+                using var red = new SolidBrush(Color.FromArgb(255, 255, 70, 70));
+                g.DrawString("PUMP STOPPED", fLabel, red, 14, pumpY);
+            }
+            else
+            {
+                g.DrawString($"PUMP  {pump.PumpRpm} rpm", fTiny, mute, 14, pumpY + 1);
+            }
+        }
+
+        // ---- memory --------------------------------------------------------
+        g.DrawString("MEMORY", fTiny, mute, 14, by - 16);
+        g.DrawString($"{ctx.System.RamUsedGb:0.0} / {ctx.System.RamTotalGb:0.0} GB",
+            fTiny, mute, new RectangleF(14, by - 16, W - 28, 16), right);
+        Draw.Bar(g, 14, by, W - 28, barH, ctx.System.RamPercent / 100.0, Accent);
+
+        float pulse = (float)(6 + 4 * Math.Sin(ctx.Time * 1.1));
+        g.FillEllipse(accent, W - 18 - pulse / 2, 12 - pulse / 2, pulse, pulse);
+    }
+
+    /// <summary>A heading with label/value rows, used beside a ring in portrait.</summary>
+    private static void Column(Graphics g, string heading, List<(string Label, string Value)> rows,
+                               int x, int w, int y, Font fLabel, Font fTiny,
+                               Brush mute, Brush white, StringFormat right)
+    {
+        g.DrawString(heading, fLabel, mute, x, y);
+        int ry = y + 22;
+        foreach ((string label, string value) in rows)
+        {
+            if (label.Length > 0) g.DrawString(label, fTiny, mute, x, ry + 2);
+            g.DrawString(value, fLabel, white, new RectangleF(x, ry, w, 16), label.Length > 0 ? right : null);
+            ry += 19;
+        }
+    }
+
     /// <summary>One ring: label above, arc for the rate, value in the middle.</summary>
     private static void Gauge(Graphics g, int cx, int cy, int r,
                               string label, string big, string sub,
                               double fraction, Color valueColour,
-                              Font fLabel, Font fTiny, Brush mute, StringFormat centre)
+                              Font fLabel, Font fTiny, Brush mute, StringFormat centre,
+                              bool drawLabel = true)
     {
-        g.DrawString(label, fLabel, mute, new RectangleF(cx - 60, cy - r - 17, 120, 14), centre);
+        if (drawLabel)
+            g.DrawString(label, fLabel, mute, new RectangleF(cx - 60, cy - r - 17, 120, 14), centre);
 
         int thickness = Math.Max(7, r / 5);
         using (var back = new Pen(Track, thickness) { StartCap = LineCap.Round, EndCap = LineCap.Round })

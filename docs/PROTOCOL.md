@@ -58,12 +58,34 @@ byte-loaded assembly, and it throws.
 
 ## 3. Geometry
 
-The dynamic framebuffer is **320x240 landscape**, and it is **not scaled**. Push
-a 240-wide bitmap and only the left 240 columns update — the rest keeps showing
-the previous frame.
+The panel is natively **240x320**, and the framebuffer is **never scaled**. Push
+a buffer of the wrong shape and the screen keeps showing the previous frame
+wherever the new one does not reach.
 
-The module itself is a 240x320 portrait panel mounted rotated. `GetDeviceInfo`
-reports its rotation in **degrees** (0/90/180/270), not as an index.
+### The stored rotation decides the shape
+
+`GetDeviceInfo` reports a rotation in **degrees** (0/90/180/270). It is a
+*setting*, not a sensor: `SetLcmDir` writes it, and it is what MSI Center's
+"Select Direction of Your Device" window changes. That window shows the pump
+head in four installed orientations (hoses left, right, up, down), so the value
+describes **how the cooler is mounted**.
+
+The framebuffer shape follows it. Verified on an S280 by pushing labelled test
+patterns, in both shapes, at each of 0 and 180 (270 was already known good):
+
+| Rotation | Buffer the panel wants | Node |
+|---|---|---|
+| 90 / 270 | **320x240** landscape | `M7-S0-O-R1` |
+| 0 / 180 | **240x320** portrait | `M7-S0-O-R0` |
+
+At 0 and 180 a 320x240 frame came out sideways and left stale pixels where it
+did not reach, while a 240x320 frame filled the glass. The firmware applies the
+rotation itself, so **always send an upright buffer in the right shape** — never
+rotate on the host. (The two "tall" pump pictures in MSI's dialog are the
+0/180 mounts; the two "wide" ones are 90/270.)
+
+Because the user can change this setting while you are running, re-read it every
+few seconds and rebuild the frame when the shape changes.
 
 ## 4. Pushing a frame
 

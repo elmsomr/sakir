@@ -55,7 +55,9 @@ public sealed class GameScene : IScene
         // Proportional to the logical height: a fixed 44pt would keep its pixel
         // size while the canvas shrinks under a higher text scale, and start
         // colliding with the line underneath it.
-        using var fHuge = new Font("Segoe UI", ctx.Height * 0.175f, FontStyle.Bold);
+        // Also bounded by width: a portrait panel is tall and narrow, and a
+        // height-only size would run off the side.
+        using var fHuge = new Font("Segoe UI", Math.Min(ctx.Height * 0.175f, ctx.Width * 0.30f), FontStyle.Bold);
         using var fTiny = new Font("Segoe UI", 8);
         using StringFormat right = Draw.RightAligned();
 
@@ -116,11 +118,32 @@ public sealed class GameScene : IScene
         {
             subLine = ctx.Gpu.Available && ctx.Gpu.HasHotspotAndPower ? $"HOTSPOT  {ctx.Gpu.Hotspot}{Draw.Deg}C" : "";
         }
-        if (subLine.Length > 0) g.DrawString(subLine, fTiny, mute, 15, bottomTop - 16);
 
-        // ---- right column: temperatures first ------------------------------
-        int rx = (int)(W * 0.525), rw = W - rx - 14, ry = midTop + 4;
-        int rowStep = Math.Max(17, (bottomTop - ry - 6) / 4);
+        // Portrait (hoses up/down mount, 240x320): the figures cannot sit in a
+        // column beside the FPS number, so they stack underneath it, full width.
+        bool portrait = H > W;
+        // From the font size rather than MeasureString: for a large font that
+        // returns the full line box, which is about half again taller than the
+        // digits, and the wasted gap pushed rows off the bottom at 1.25x.
+        // Digits end roughly 1.1 em below where the text is drawn.
+        int hugeBottom = hugeY + (int)(fHuge.Size * 96f / 72f * 1.1f);
+
+        if (subLine.Length > 0)
+            g.DrawString(subLine, fTiny, mute, 15, portrait ? hugeBottom : bottomTop - 16);
+
+        // ---- figures: temperatures first -------------------------------------
+        int rx, rw, ry, rowStep;
+        if (portrait)
+        {
+            rx = 14; rw = W - 28;
+            ry = hugeBottom + 22;
+            rowStep = 20;
+        }
+        else
+        {
+            rx = (int)(W * 0.525); rw = W - rx - 14; ry = midTop + 4;
+            rowStep = Math.Max(17, (bottomTop - ry - 6) / 4);
+        }
         var rows = new List<(string Label, string Value, Color Colour)>();
 
         // Ordered by what actually matters mid-game, because the last rows get

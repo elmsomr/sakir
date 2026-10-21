@@ -77,6 +77,10 @@ public static class Draw
         var r = new Rectangle(x, y, w, h);
         using var b = new LinearGradientBrush(r,
             Color.FromArgb(topAlpha, 0, 0, 0), Color.FromArgb(bottomAlpha, 0, 0, 0), 90f);
+        // Without this GDI+ can paint a thin dark line at the gradient's first
+        // row (the brush tiles, and the seam picks up the far colour). It showed
+        // up across the middle of the portrait music screen.
+        b.WrapMode = WrapMode.TileFlipXY;
         g.FillRectangle(b, r);
     }
 

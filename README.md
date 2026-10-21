@@ -89,7 +89,19 @@ Sakir.exe --selftest
 ```
 
 Command line: `--tray` starts hidden in the tray, `--selftest` runs the hardware
-check and exits.
+check and exits (it pushes one test frame, so the screen stays on it until Şakir
+or MSI Center draws again), `--profiles` checks your game profile files,
+`--snapshot <folder>` renders every scene to PNG without touching the panel.
+
+### Mounting orientation
+
+The pump head can be installed with the hoses pointing left, right, up or down.
+MSI Center's "Select Direction of Your Device" setting records which, and Şakir
+follows it: wide mounts get the landscape layout, tall mounts (hoses up or down)
+get a portrait layout. If you change the setting in MSI Center while Şakir is
+running it switches within a few seconds. The landscape layout is verified on an
+S280; **the portrait layout has been checked in renders and with a test pattern
+on a wide mount, but not yet on a real tall mount**, so reports are welcome.
 
 ## CPU temperature (optional): PawnIO + administrator
 

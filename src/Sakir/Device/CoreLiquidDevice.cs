@@ -18,11 +18,34 @@ namespace Sakir.Device;
 /// </summary>
 public sealed class CoreLiquidDevice : IDisposable
 {
-    /// <summary>Dynamic-upload framebuffer is landscape, and is NOT scaled by
-    /// the firmware: hand it anything narrower and the leftover columns keep
-    /// showing the previous frame.</summary>
-    public const int PanelWidth = 320;
-    public const int PanelHeight = 240;
+    /// <summary>
+    /// The panel is 240x320 natively; these are its two side lengths. Which way
+    /// round the framebuffer is depends on how the pump head is mounted - see
+    /// <see cref="IsPortrait"/>. The firmware does NOT scale: hand it a buffer
+    /// of the wrong shape and part of the screen keeps showing the previous
+    /// frame.
+    /// </summary>
+    public const int LongSide = 320;
+    public const int ShortSide = 240;
+
+    /// <summary>
+    /// MSI Center's "Select Direction of Your Device" setting is the stored
+    /// rotation, and it describes how the pump head is installed. Verified on an
+    /// S280 by pushing test patterns at each rotation:
+    ///
+    ///   90 / 270  -> 320x240 landscape buffer  (node R1)
+    ///   0  / 180  -> 240x320 portrait buffer   (node R0)
+    ///
+    /// A 320x240 frame sent at 0/180 came out sideways and left stale pixels
+    /// where the buffer did not reach; a 240x320 frame filled the glass. The
+    /// firmware applies the rotation itself, so an upright buffer is always the
+    /// right thing to send - no rotating on our side.
+    /// </summary>
+    public static bool IsPortrait(int direction) => direction is 0 or 180;
+
+    public bool Portrait => IsPortrait(Direction);
+    public int FrameWidth => Portrait ? ShortSide : LongSide;
+    public int FrameHeight => Portrait ? LongSide : ShortSide;
 
     private const BindingFlags BF = BindingFlags.NonPublic | BindingFlags.Public |
                                     BindingFlags.Instance | BindingFlags.Static;
@@ -126,6 +149,26 @@ public sealed class CoreLiquidDevice : IDisposable
 
     public void SetBacklight(int percent) =>
         Call("SetBackLight", Math.Clamp(percent, 0, 100));
+
+    /// <summary>
+    /// Re-reads the stored rotation. The user can change it in MSI Center while
+    /// we are running, and the framebuffer shape changes with it. Returns true
+    /// if it changed.
+    /// </summary>
+    public bool RefreshDirection()
+    {
+        if (!_open) return false;
+        try
+        {
+            var args = new object?[] { null, null, null, null, null };
+            if (Call("GetDeviceInfo", args) is not true) return false;
+            int d = (int)(uint)(args[2] ?? 0u);
+            if (d == Direction) return false;
+            Direction = d;
+            return true;
+        }
+        catch { return false; }
+    }
 
     /// <summary>
     /// Round-trips a read to prove the handle is still connected to real

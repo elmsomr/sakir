@@ -31,7 +31,7 @@ public sealed class FpsProvider
     private bool _loggedMissing;
 
     /// <summary>Last reading. 0 means "no game rendering", not "zero fps".</summary>
-    public int Fps { get; private set; }
+    public int Fps { get; internal set; }   // internal so --snapshot can show a sample value
 
     public bool DetectorRunning { get; private set; }
 
