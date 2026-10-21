@@ -33,6 +33,15 @@ public sealed class GpuSensors
     public int Watts { get; private set; }
     public int MemUsedMb { get; private set; }
 
+    /// <summary>What each vendor probe returned, for --selftest and the log.</summary>
+    public List<string> Probe { get; } = new();
+
+    /// <summary>True when the last read call itself succeeded (as opposed to returning zeros).</summary>
+    public bool LastReadOk { get; private set; }
+
+    /// <summary>Every field of the vendor struct as the last read returned it.</summary>
+    public string RawFields { get; private set; } = "";
+
     public bool Start()
     {
         // ADLX.dll / NDA.dll are also referenced by relative path, so the
@@ -65,12 +74,22 @@ public sealed class GpuSensors
         {
             Type? api = asm.GetType(apiType);
             Type? st = asm.GetType(structType);
-            if (api is null || st is null) return false;
-            if (api.GetMethod(initName, BF)?.Invoke(null, initArgs) is not true) return false;
+            if (api is null || st is null)
+            {
+                Probe.Add($"{initName}: type not found in API_Coreliquid.dll");
+                return false;
+            }
+            object? r = api.GetMethod(initName, BF)?.Invoke(null, initArgs);
+            Probe.Add($"{initName}: {(r is null ? "method missing" : r.ToString())}");
+            if (r is not true) return false;
             _api = api; _struct = st;
             return true;
         }
-        catch { return false; }
+        catch (Exception ex)
+        {
+            Probe.Add($"{initName}: threw {(ex.InnerException ?? ex).GetType().Name}");
+            return false;
+        }
     }
 
     public void Update()
@@ -81,9 +100,12 @@ public sealed class GpuSensors
             object sensors = Activator.CreateInstance(_struct)!;
             var args = new object?[] { 0, sensors };
             string m = _isAmd ? "ADLX_GetSensors" : "NDA_GetSensors";
-            if (_api.GetMethod(m, BF)?.Invoke(null, args) is not true) return;
+            LastReadOk = _api.GetMethod(m, BF)?.Invoke(null, args) is true;
+            if (!LastReadOk) return;
 
             object s = args[1]!;
+            RawFields = string.Join(", ", _struct.GetFields(BF)
+                .Select(f => $"{f.Name}={f.GetValue(s)}"));
             if (_isAmd)
             {
                 Temp = GetInt(s, "GPU_Temperature");

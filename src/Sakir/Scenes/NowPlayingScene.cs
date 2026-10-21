@@ -55,10 +55,13 @@ public sealed class NowPlayingScene : IScene
         // ---- source badge -------------------------------------------------
         const int bx = 13, by = 11, bs = 26;
         using (GraphicsPath badge = Draw.RoundedRect(bx, by, bs, bs, 7))
-        using (var bb = new LinearGradientBrush(new Rectangle(bx, by, bs, bs),
-                   Color.FromArgb(255, 250, 45, 85), Color.FromArgb(255, 205, 25, 105), 90f))
+        // neutral glass chip: readable over any artwork, and deliberately not
+        // any player's brand colour
+        using (var bb = new SolidBrush(Color.FromArgb(150, 12, 12, 18)))
+        using (var rim = new Pen(Color.FromArgb(70, 255, 255, 255), 1f))
         {
             g.FillPath(bb, badge);
+            g.DrawPath(rim, badge);
         }
 
         // hand-drawn note: a symbol font glyph would render as tofu if missing

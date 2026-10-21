@@ -310,12 +310,22 @@ public partial class App : System.Windows.Application
         Console.WriteLine($"  ram       {sensors.RamUsedGb:0.0} / {sensors.RamTotalGb:0.0} GB");
 
         var gpu = new Sensors.GpuSensors();
-        if (gpu.Start())
+        bool gpuStarted;
+        try { gpuStarted = gpu.Start(); }
+        catch (Exception ex) { gpuStarted = false; gpu.Probe.Add($"Start threw {ex.GetType().Name}: {ex.Message}"); }
+
+        foreach (string line in gpu.Probe) Console.WriteLine($"  gpu probe {line}");
+        if (gpuStarted)
         {
             gpu.Update();
-            Console.WriteLine($"  gpu       {gpu.Vendor}  {gpu.Temp} C (hotspot {gpu.Hotspot})  {gpu.Usage}%  {gpu.Watts} W");
+            if (!gpu.LastReadOk)
+                Console.WriteLine($"  gpu       {gpu.Vendor} initialised, but the sensor read FAILED (values below are not real)");
+            else
+                Console.WriteLine($"  gpu       {gpu.Vendor}  read OK");
+            Console.WriteLine($"  gpu vals  {gpu.Temp} C (hotspot {gpu.Hotspot})  {gpu.Usage}%  {gpu.ClockMhz} MHz  {gpu.Watts} W  {gpu.MemUsedMb} MB");
+            if (gpu.RawFields.Length > 0) Console.WriteLine($"  gpu raw   {gpu.RawFields}");
         }
-        else Console.WriteLine("  gpu       unavailable");
+        else Console.WriteLine("  gpu       unavailable (no AMD or NVIDIA sensor library initialised)");
         sensors.Dispose();
 
         // Same shape the app itself would push for this rotation.

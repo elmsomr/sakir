@@ -135,6 +135,11 @@ administrator once to create that task.
   has to go through the mirror scene as pushed frames. Audio stays on the PC.
 - Minimised windows cannot be mirrored — a minimised window has nothing to
   render. Some DRM-protected surfaces come back black.
+- **CPU temperature is verified on AMD only.** Intel should work the same way
+  (LibreHardwareMonitor supports it, with PawnIO and administrator rights) but
+  has not been tried on real Intel hardware. If it shows load instead of a
+  temperature, `sakir.log` lists the sensors that were found; attach it to an
+  issue.
 - **GPU sensors are verified on AMD only.** The NVIDIA path reads MSI's own
   NVIDIA structure (temperature, usage, clock, VRAM; MSI's API exposes no
   hotspot or power for NVIDIA) but has never run on real NVIDIA hardware. If
